@@ -1,20 +1,31 @@
 import os
 import uuid
-import torch
 from langdetect import detect
 from keybert import KeyBERT
 from PIL import Image, ImageDraw, ImageFont
 from transformers import pipeline
 
-# Load Whisper model
-asr = pipeline("automatic-speech-recognition", model="openai/whisper-small")
+# Load Whisper model with forced English transcription
+asr = pipeline(
+    "automatic-speech-recognition",
+    model="openai/whisper-small",
+    tokenizer="openai/whisper-small"
+)
 
 # Keyword extraction
 kw_model = KeyBERT()
 
 def transcribe_audio(audio_path):
-    result = asr(audio_path)
-    return result['text']
+    try:
+        result = asr(audio_path, generate_kwargs={"task": "transcribe", "language": "en"})
+        text = result['text'].strip()
+
+        # Very short or repeated outputs likely bad
+        if len(text) < 5 or text.lower().count(text.split()[0]) > 10:
+            return "Transcription unclear"
+        return text
+    except Exception as e:
+        return f"[Error in transcription] {e}"
 
 def detect_language(text):
     try:
@@ -23,16 +34,20 @@ def detect_language(text):
         return "unknown"
 
 def extract_keywords(text, num_keywords=5):
-    keywords = kw_model.extract_keywords(text, top_n=num_keywords)
-    return [kw[0] for kw in keywords]
+    try:
+        keywords = kw_model.extract_keywords(text, top_n=num_keywords)
+        return [kw[0] for kw in keywords]
+    except:
+        return []
 
 def create_story_tile(text, keywords, bg_image='assets/default_bg.jpg', output_dir='tiles'):
     os.makedirs(output_dir, exist_ok=True)
     img = Image.open(bg_image).convert("RGB")
     draw = ImageDraw.Draw(img)
 
+    # Try loading Noto font first
     try:
-        font = ImageFont.truetype("arial.ttf", size=28)
+        font = ImageFont.truetype("assets/NotoSans-Regular.ttf", size=28)
     except:
         font = ImageFont.load_default()
 
@@ -56,7 +71,7 @@ def create_story_tile(text, keywords, bg_image='assets/default_bg.jpg', output_d
         draw.text((margin, y_text), line, font=font, fill="black")
         y_text += 35
 
-    # Add keywords at the bottom
+    # Add keywords at bottom
     kw_text = "Keywords: " + ", ".join(keywords)
     draw.text((margin, height - 50), kw_text, font=font, fill="gray")
 
