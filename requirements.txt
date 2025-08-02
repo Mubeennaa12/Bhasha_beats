@@ -1,0 +1,11 @@
+streamlit
+transformers
+torch
+torchaudio
+langdetect
+keybert
+Pillow
+scikit-learn
+sentence-transformers
+accelerate
+numpy
