@@ -20,27 +20,5 @@ Features
 
 📥 Data saved to local CSV (stories.csv)
 
-Try It Now
-Run locally:
+ Live link: https://mubeennaa12-bhasha-beats-app-jgrkaf.streamlit.app/
 
-bash
-Copy
-Edit
-git clone https://your-repo-url
-cd bhasha_beat
-pip install -r requirements.txt
-streamlit run app.py
-MVP Stack
-Streamlit
-
-openai/whisper-small (via transformers)
-
-langdetect
-
-keybert
-
-Pillow
-
-Python 3.9+
-
-—
