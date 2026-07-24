@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import pandas as pd
+import textwrap
 from utils import transcribe_audio, detect_language, extract_keywords, create_story_tile, summarize_text
 import datetime
 
@@ -148,7 +149,7 @@ if len(df):
             
         img_path = row["image_path"]
         
-        card_html = f"""
+        card_html = textwrap.dedent(f"""
         <div class="glass-card">
             <div class="story-header">
                 <span class="lang-badge">{lang_name}</span>
@@ -160,7 +161,7 @@ if len(df):
                 {kw_badges_html}
             </div>
         </div>
-        """
+        """)
         st.markdown(card_html, unsafe_allow_html=True)
         
         # Tile Download Button
