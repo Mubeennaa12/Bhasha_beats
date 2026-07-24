@@ -12,8 +12,12 @@ os.makedirs("data", exist_ok=True)
 # Load CSV or initialize
 if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
-    if "summary" not in df.columns:
-        df["summary"] = ""
+    # Ensure all expected columns are present
+    for col in ["timestamp", "text", "language", "keywords", "summary", "image_path"]:
+        if col not in df.columns:
+            df[col] = ""
+    # Enforce exact column order to prevent column mismatch on inserts
+    df = df[["timestamp", "text", "language", "keywords", "summary", "image_path"]]
 else:
     df = pd.DataFrame(columns=["timestamp", "text", "language", "keywords", "summary", "image_path"])
 
@@ -158,19 +162,17 @@ with col_right:
                 
             img_path = row["image_path"]
             
-            card_html = textwrap.dedent(f"""
-            <div class="glass-card">
-                <div class="story-header">
-                    <span class="lang-badge">{lang_name}</span>
-                    <span class="story-date">⏱️ {formatted_date}</span>
-                </div>
-                <div class="story-text">"{story_text}"</div>
-                {summary_html}
-                <div class="badge-container">
-                    {kw_badges_html}
-                </div>
-            </div>
-            """)
+            card_html = f"""<div class="glass-card">
+<div class="story-header">
+<span class="lang-badge">{lang_name}</span>
+<span class="story-date">⏱️ {formatted_date}</span>
+</div>
+<div class="story-text">"{story_text}"</div>
+{summary_html}
+<div class="badge-container">
+{kw_badges_html}
+</div>
+</div>"""
             
             # Alternate placing between column A and column B
             target_col = grid_col_a if i % 2 == 0 else grid_col_b
