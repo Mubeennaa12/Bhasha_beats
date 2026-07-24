@@ -40,6 +40,37 @@ def extract_keywords(text, num_keywords=5):
     except:
         return []
 
+# Summarization model (loaded lazily to optimize application startup)
+summarizer = None
+
+def get_summarizer():
+    global summarizer
+    if summarizer is None:
+        summarizer = pipeline(
+            "summarization",
+            model="sshleifer/distilbart-cnn-12-6"
+        )
+    return summarizer
+
+def summarize_text(text):
+    words = text.split()
+    lang = detect_language(text)
+    
+    # If the text is short or not English, return the original text since distilbart is English-only.
+    if len(words) < 30 or lang != "en":
+        return text
+        
+    try:
+        summarizer_pipeline = get_summarizer()
+        input_len = len(words)
+        max_len = min(75, max(15, int(input_len * 0.6)))
+        min_len = min(15, int(max_len * 0.4))
+        
+        result = summarizer_pipeline(text, max_length=max_len, min_length=min_len, do_sample=False)
+        return result[0]['summary_text'].strip()
+    except Exception as e:
+        return f"[Error in summarization] {e}"
+
 def create_story_tile(text, keywords, bg_image='assets/default_bg.jpg', output_dir='tiles'):
     os.makedirs(output_dir, exist_ok=True)
     img = Image.open(bg_image).convert("RGB")
